@@ -17,6 +17,10 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    public Iterable<UserEntity> getAllUsers(){
+        return userRepository.findAll();
+    }
+
     public boolean auth(UserDto userDto){
         UserEntity user = userRepository.findByEmail(userDto.getEmail());
         return BCrypt.checkpw(userDto.getPassword(), user.getPassword());
@@ -25,5 +29,9 @@ public class UserService {
     public UserEntity registerUser(UserDto userDto){
         UserEntity newUser = new UserEntity(userDto);
         return userRepository.save(newUser);
+    }
+
+    public void deleteUser(Long id){
+        userRepository.deleteById(id);
     }
 }

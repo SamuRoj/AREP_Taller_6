@@ -1,7 +1,10 @@
+// let url = "http://localhost:8080"
+let url = "https://srbackserver.duckdns.org:8080"
+
 api = (
     function() {
         const getAllProperties = () => {
-            return fetch("/properties", {
+            return fetch(url + "/properties", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -10,7 +13,7 @@ api = (
         }
     
         const getPropertyById = (id) => {
-            return fetch("/properties/" + id, {
+            return fetch(url + "/properties/" + id, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -19,7 +22,7 @@ api = (
         }
     
         const filterByAddress = (address) => {
-            return fetch("/properties/address?address=" + address, {
+            return fetch(url + "/properties/address?address=" + address, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json" 
@@ -28,7 +31,7 @@ api = (
         }
     
         const filterByPrice = (price) => {
-            return fetch("/properties/price?price=" + price, {
+            return fetch(url + "/properties/price?price=" + price, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -37,7 +40,7 @@ api = (
         }
     
         const filterBySize = (size) => {
-            return fetch("/properties/size?size=" + size, {
+            return fetch(url + "/properties/size?size=" + size, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -46,7 +49,7 @@ api = (
         }
     
         const createProperty = (data) =>  {
-            return fetch("/properties", {
+            return fetch(url + "/properties", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -56,7 +59,7 @@ api = (
         }
     
         const updateProperty = (id, data) => {
-            return fetch("/properties/" + id, {
+            return fetch(url + "/properties/" + id, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -66,11 +69,31 @@ api = (
         }
     
         const deleteProperty = (id) => {
-            return fetch("/properties/" + id, {
+            return fetch(url + "/properties/" + id, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json"
                 }
+            })
+        }
+
+        const authenticateUser = (data) => {
+            return fetch(url + "/users/auth", {
+                method: "POST",
+                headers: {  
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+        }
+
+        const registerUser = (data) => {
+            return fetch(url + "/users", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
             })
         }
 
@@ -82,7 +105,9 @@ api = (
             filterBySize,
             createProperty,
             updateProperty,
-            deleteProperty
+            deleteProperty,
+            authenticateUser,
+            registerUser
         }
     }
 )();
