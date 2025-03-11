@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 
 @RestController
-@CrossOrigin(origins = "https://srapacheserver.duckdns.org")
+@CrossOrigin(origins = "https://srapacheserver.duckdns.org", allowedHeaders = "*", allowCredentials = "true")
 @RequestMapping("/properties")
 public class PropertyController {
 

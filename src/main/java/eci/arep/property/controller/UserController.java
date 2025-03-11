@@ -9,10 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "https://srapacheserver.duckdns.org")
+@CrossOrigin(origins = "https://srapacheserver.duckdns.org", allowedHeaders = "*", allowCredentials = "true")
 @RequestMapping("/users")
 public class UserController {
     UserService userService;
