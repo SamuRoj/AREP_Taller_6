@@ -6,9 +6,17 @@ import eci.arep.property.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -29,6 +37,21 @@ public class UserController {
     @PostMapping("/auth")
     public ResponseEntity<Void> authUser(@RequestBody UserDto userDto, HttpServletRequest request) {
         if(userService.auth(userDto)){
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("USER"));
+
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDto.getEmail(),
+                    null,
+                    authorities
+            );
+
+            SecurityContext securityContext = SecurityContextHolder.getContext();
+            securityContext.setAuthentication(authentication);
+
+            request.getSession().setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext
+            );
+
             return ResponseEntity.ok().build();
         }
 
