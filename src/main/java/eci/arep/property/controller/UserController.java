@@ -11,7 +11,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/users")
-@CrossOrigin(origins = "https://srapacheserver.duckdns.org", allowedHeaders = "*", allowCredentials = "true")
+@CrossOrigin(origins = "https://localhost:8080", allowedHeaders = "*", allowCredentials = "true")
 public class UserController {
     UserService userService;
 

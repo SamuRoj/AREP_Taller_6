@@ -1,5 +1,5 @@
-// let url = "http://localhost:8080"
-let url = "https://srbackserver.duckdns.org:8080"
+let url = "https://localhost:8080"
+// let url = "https://srbackserver.duckdns.org:8080"
 
 api = (
     function() {

@@ -1,15 +1,22 @@
-# Architectural Patterns
+# Secure Application Design
 
-This project is a simple CRUD  system for managing real estate properties. It has a basic web application that 
-allows users to perform the following operations on property listings:
+This project is a simple CRUD system for managing real estate properties. It has a basic web application that 
+allows users to manage property listings, a secure design to ensure integrity and confidentiality and a scalable 
+application by using AWS infrastructure. 
 
-- Create new property listing.
-- Read or view a list of all properties and individual property details.
-- Update existing property details.
-- Delete property listings.
+The architecture has three primary components:
 
-It has a frontend built with HTML and JavaScript, a REST API backend made with Spring Boot and a database in 
-MySql. The backend and the database had been deployed into AWS EC2 instances for the deployment on the cloud.
+- **Server 1:** Apache Server
+The Apache server serves an asynchronous HTML + JavaScript client over a secure connection using TLS. Client-side 
+code will be delivered through encrypted channels, ensuring data integrity and confidentiality.
+
+- **Server 2:** Spring Framework
+The Spring server will handle backend services, offering RESTful API endpoints. These services will also be 
+protected using TLS, ensuring secure communication between the client and the backend.
+
+- **Server 3:** MySql
+The MySql server will receive the petitions from the backend and store them in a database to persist the received
+information.
 
 ## Getting Started
 
@@ -60,13 +67,13 @@ docker --version
 1. Clone the repository to your local machine using Git.
 
 ```
-git clone https://github.com/SamuRoj/AREP_Taller_5.git
+git clone https://github.com/SamuRoj/AREP_Taller_6.git
 ```
 
 2. Navigate to the project directory.
 
 ```
-cd AREP_Taller_5
+cd AREP_Taller_6
 ```
 
 3. Run a container with a mysql image, it can be done with the following command and wait for it to be completely 
@@ -85,7 +92,7 @@ mvn spring-boot:run
 5. Once the application is running, open your web browser and visit:
 
 ```
-http://localhost:8080/index.html
+https://localhost:8080/index.html
 ```
 
 ## Features of the application
@@ -154,26 +161,34 @@ http://localhost:8080/index.html
 │   │           └───property
 │   │               │   PropertyApplication.java # Runs the app through the port 8080
 │   │               │
+│   │               ├───config # Configures the app to receives cross origin requests
+│   │               │       SecurityConfig.java
+│   │               │
 │   │               ├───controller # Handles the request from the clients to the endpoints
 │   │               │       PropertyController.java
+│   │               │       UserController.java
 │   │               │
 │   │               ├───dto # Maps the values of the user into a data transfer object
 │   │               │       PropertyDto.java
+│   │               │       UserDto.java
 │   │               │
 │   │               ├───exception # Custom exception to handle errors
 │   │               │       PropertyNotFound.java
 │   │               │
 │   │               ├───model # Entity being used at the database
 │   │               │       Property.java
+│   │               │       UserEntity.java
 │   │               │
 │   │               ├───repository # Communicates the app with the database
 │   │               │       PropertyRepository.java
+│   │               │       UserRepository.java
 │   │               │
 │   │               └───service # Logic of each endpoint
 │   │                       PropertyService.java
+│   │                       UserService.java
 │   │
-│   └───resources 
-│       │   application.properties # Setup of the application
+│   └───resources # Setup of the application
+│       │   application.properties
 │       │
 │       ├───img # Images used in the README
 │       │       After_Delete.png
@@ -189,17 +204,30 @@ http://localhost:8080/index.html
 │       │       PropertyServiceTests.png
 │       │       Update_Property.png
 │       │
-│       ├───static # Static files that will be served to the user. 
-│       │       api.js
-│       │       index.html
-│       │       script.js
-│       │       styles.css
+│       ├───keystore
+│       │       srpropcert.cer
+│       │       srpropkeystore.p12
+│       │
+│       ├───static # Static files that will be served to the user through the Apache Server. 
+│       │   │   index.html
+│       │   │   properties.html
+│       │   │   register.html
+│       │   │
+│       │   ├───css
+│       │   │       index.css
+│       │   │       login.css
+│       │   │       register.css
+│       │   │
+│       │   └───js 
+│       │           api.js
+│       │           login.js
+│       │           properties.js
+│       │           register.js
+│       │
+│       ├───truststore
+│       │       myTrustStore
 │       │
 │       └───vid # Videos used in the README
-│               AWS_Test.gif
-│               Docker_Hub_Upload.gif
-│               Local_Demo.gif
-│               mysql_AWS.gif
 │
 └───test
     └───java
@@ -208,8 +236,9 @@ http://localhost:8080/index.html
                 └───property
                     │   PropertyApplicationTests.java
                     │
-                    └───service # Unit tests for the service
+                    └───service # Unit tests for the services
                             PropertyServiceTests.java
+                            UserServiceTests.java
 ```
 
 ### Class Diagram
@@ -221,15 +250,20 @@ http://localhost:8080/index.html
 * **PropertyApplication:** A class that initiates and sets up the entire application. 
 * **PropertyController:** Application that handles incoming requests related to real estate properties. Acts as an 
 interface between the client and the backend logic. 
-* **PropertyDto:** It's used to transfer property data between layers of an application, in this case the controller, the
-service and the model.
+* **UserController:** Application that handles incoming requests related to the users.
+* **PropertyDto:** It's used to transfer property data between the layers of the application, in this case the controller,
+service and model.
+* **UserDto:** It's used to transfer user data between the layers of the application.
 * **PropertyNotFound:** Exception showing that the requested property could not be found in the database.
 * **Property:** Entity that represents a real-world property with some of his features like the address, price, size and
 description inside the application.
+* **UserEntity:** Entity that represents a real user with some features like the email and password.
 * **PropertyRepository:** Component responsible for managing the data access layer related to properties, handles database
 operations. 
+* **UserRepository:** Component responsible for managing the data access layer related to users.
 * **PropertyService:** Contains the business logic related to properties. It acts as an intermediary between the 
 controller and the repository.
+* **UserService:** Contains the business logic related to users and hashes the passwords for security.
 
 ### Deployment Diagram
 
@@ -239,51 +273,18 @@ controller and the repository.
 in the cloud.
 * **Docker Engine:** Software platform that enables developers to build, deploy and run applications inside containers.
 * **MySql Container:** Instance of the MySQL database management system, deployed with Docker.
-* **Backend Container:** Container with the main application that handles the server-side logic and data processing for 
-the property listings.
+* **Backend Server:** Server with the main application that handles the server-side logic data processing for 
+the property listings and user management and handles basic security of the app.
+* **Apache Server:** Server that answers requests related to the static files of the app.
 * **HTML, CSS and JS:** Files required to render the webpage in the client browser. 
 
-## Docker and AWS Deployment
+## AWS Deployment
 
-### Video of local deployment
-
-Demo that shows the app running locally.
+### Local Deployment
 
 ![Local_Demo.gif](src/main/resources/vid/Local_Demo.gif)
 
-### Video with Dockerhub and AWS deployment working
-
-This is a demo that shows the deployment of the image on DockerHub, the virtual machine used in AWS, the creation
-of the container and the access to the server through the virtual machine showing all the features included in the
-web application.
-
-1. Video of the creation of an Amazon EC2 instance and a MySql container, commands used:
-
-```
-sudo yum update -y
-sudo yum install docker
-sudo service docker start
-sudo usermod -a -G docker ec2-user
-docker run --name mysqlpropertydb -e MYSQL_ROOT_PASSWORD=secretProperty -e MYSQL_DATABASE=properties -e MYSQL_USER=userProperty -e MYSQL_PASSWORD=secretProperty -p 3306:3306 -d mysql:latest
-```
-
-![mysql_AWS.gif](src/main/resources/vid/mysql_AWS.gif)
-
-2. Uploading the local image to Docker.
-
-**Note:** The steps in this video just work when the local instance is connected properly to the Amazon Ec2 instance
-with the mysql image. 
-
-![Docker_Hub_Upload.gif](src/main/resources/vid/Docker_Hub_Upload.gif)
-
-3. Testing the functionality of the app in two Amazon EC2 instances, one for the backend and the other for the
-database. 
-
-```
-docker run -d -p 8080:8080 --name propertiesapp samuroj/springdbtaller5
-```
-
-**Note:** This command may not work because the IP and url of the database in AWS is constanly changing. 
+### Video with AWS Deployment working
 
 ![AWS_Test.gif](src/main/resources/vid/AWS_Test.gif)
 
@@ -309,6 +310,14 @@ The tests in this file check the functionality of the logic within the service c
 - Image of the results:
 
   ![PropertyServiceTests.png](src/main/resources/img/PropertyServiceTests.png)
+
+### UserServiceTests
+
+The tests in this file check the functionality of the logic within the user service class.
+
+- Image of the results:
+
+  ![UserServiceTests.png](src/main/resources/img/UserServiceTests.png)
 
 ## Built With
 
