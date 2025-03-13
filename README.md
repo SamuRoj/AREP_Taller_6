@@ -6,9 +6,8 @@ application by using AWS infrastructure.
 
 The architecture has three primary components:
 
-- **Server 1:** Apache Server
-The Apache server serves an asynchronous HTML + JavaScript client over a secure connection using TLS. Client-side 
-code will be delivered through encrypted channels, ensuring data integrity and confidentiality.
+- **Server 1:** Apache server that serves an asynchronous HTML + JavaScript client over a secure connection using 
+TLS. Client-side code will be delivered through encrypted channels, ensuring data integrity and confidentiality.
 
 - **Server 2:** Spring Framework
 The Spring server will handle backend services, offering RESTful API endpoints. These services will also be 
@@ -16,7 +15,7 @@ protected using TLS, ensuring secure communication between the client and the ba
 
 - **Server 3:** MySql
 The MySql server will receive the petitions from the backend and store them in a database to persist the received
-information.
+data.
 
 ## Getting Started
 
@@ -97,7 +96,7 @@ https://localhost:8080/index.html
 
 ## Features of the application
 
-**Note:** {springurl} represents the following string "http://localhost:8080"
+**Note:** {springurl} represents the following string "https://localhost:8080"
 
 **Get all properties:** Retrieves all properties stored in the database.
 
@@ -149,6 +148,26 @@ https://localhost:8080/index.html
 
 ![After_Delete.png](src/main/resources/img/After_Delete.png)
 
+**Get all users:** Retrieves all the users from the database.
+
+**Endpoint:** GET /users
+
+![Retrieve_Users.png](src/main/resources/img/Retrieve_Users.png)
+
+**Create User:** Creates a new user in the database.
+
+**Endpoint:** POST /users
+
+![Create_User.png](src/main/resources/img/Create_User.png)
+
+**Create User:** Verifies the credentials of the user to approve his access to the app.
+
+**Endpoint:** POST /users/auth
+
+![Auth.png](src/main/resources/img/Auth.png)
+
+![Wrong_Auth.png](src/main/resources/img/Wrong_Auth.png)
+
 ## Architecture
 
 ### Project Structure
@@ -175,7 +194,7 @@ https://localhost:8080/index.html
 │   │               ├───exception # Custom exception to handle errors
 │   │               │       PropertyNotFound.java
 │   │               │
-│   │               ├───model # Entity being used at the database
+│   │               ├───model # Entities being used at the database
 │   │               │       Property.java
 │   │               │       UserEntity.java
 │   │               │
@@ -204,7 +223,7 @@ https://localhost:8080/index.html
 │       │       PropertyServiceTests.png
 │       │       Update_Property.png
 │       │
-│       ├───keystore
+│       ├───keystore # Keys and certificate used for the https connection
 │       │       srpropcert.cer
 │       │       srpropkeystore.p12
 │       │
@@ -279,6 +298,232 @@ the property listings and user management and handles basic security of the app.
 * **HTML, CSS and JS:** Files required to render the webpage in the client browser. 
 
 ## AWS Deployment
+
+### DuckDNS
+
+1. Create a domain with DuckDNS to be able to generate a certificate with Let's Encrypt, just put the IP of the 
+Amazon EC2 instance. 
+
+![DuckDNS.png](src/main/resources/img/DuckDNS.png)
+
+### Obtaining SSL Certificate with Certbot and Exporting to PKCS12 Format
+
+1. Install Certbot
+
+```
+sudo yum install certbot -y
+```
+
+2. Obtain SSL certificate with Certbot
+
+```
+sudo certbot certonly --standalone -d <domain>
+```
+
+3. Export certificate to PKCS12 format, which is commonly used in Java-based applications.
+
+```
+sudo openssl pkcs12 -export \
+    -in /etc/letsencrypt/live/<domain>/fullchain.pem \
+    -inkey /etc/letsencrypt/live/<domain>/privkey.pem \
+    -out <keyname>.p12 \
+    -name <alias> \
+    -CAfile /etc/letsencrypt/live/<domain>/chain.pem \
+    -caname "Let's Encrypt"
+```
+
+5. Import the keystore into the application, make it by modifying the file application.properties
+
+```
+server.ssl.key-store=classpath:<keyname>.p12
+server.ssl.key-store-password=<password>
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=<alias>
+server.ssl.enabled=true
+```
+
+### Installation of servers
+
+- **Apache Server:**
+
+1. Install apache (httpd)
+
+```
+sudo yum install httpd
+```
+
+2. Start apache
+```
+sudo systemctl start httpd
+```
+
+3. Enable apache to start on boot
+
+```
+sudo systemctl enable httpd
+```
+
+4. Check the status of apache
+
+```
+sudo systemctl status httpd
+```
+
+5. Change ownership of the web directory and transfer the static files of the application to the folder 
+/var/www/html through SFTP
+
+```
+sudo chown <user>:<group> /var/www/html
+```
+
+6. Now, install Certbot to generate a certificate and a https connection to the application.
+
+```
+sudo yum install certbot
+```
+
+7. Obtain SSL certificate from Let’s Encrypt, through Certbot, answer the questions about domain, email, etc. 
+
+```
+sudo certbot certonly
+```
+
+8. Change ownership of apache configuration files, to enable SSL and https connection.
+
+```
+sudo chown <user>:<group> -R /etc/httpd/conf.d
+```
+
+9. Install SSL module for apache.
+
+```
+sudo yum install -y mod_ssl
+```
+
+10. Create or modify the apache virtual host configuration to enable SSL. Add the following block to the file
+/etc/httpd/conf.d/ssl.conf. 
+
+```
+<VirtualHost *:443>
+    ServerName <domain>
+    DocumentRoot /var/www/html
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/<domain>/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/<domain>/privkey.pem
+
+    <Directory /var/www/html>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+11. Restart apache to apply changes and navigate to your domain to see the https connection. Also, ensure that 
+port 443 is open to receive https connections.
+
+```
+sudo systemctl restart httpd
+```
+
+12. Access the application through the following link:
+
+```
+https://<your-front-domain>
+```
+
+- **Application Server (Spring):**
+
+1. Install Java 17
+
+```
+sudo yum install java-17-amazon-corretto-devel -y
+```
+
+2. Install Maven
+
+```
+sudo yum install maven -y
+```
+
+3. Install Git
+
+```
+sudo yum install git -y
+```
+
+4. Clone the Spring project repository
+
+```
+git clone https://github.com/SamuRoj/AREP_Taller_6.git
+```
+
+5. Navigate to the project directory
+
+```
+cd AREP_Taller_6
+```
+
+6. Modify some project files with the URL of your domain, the files to modify are SecurityConfig, User and Property
+Controller and application.properties (Database connection)
+
+```
+nano src/main/java/com/example/YourClass.java
+```
+
+7. Build the Spring project with Maven
+
+```
+mvn clean install
+```
+
+8. Run the application
+
+```
+mvn spring-boot:run
+```
+
+- **MySql Server:**
+
+1. Update the system packages
+
+```
+sudo yum update -y
+```
+
+2. Install docker
+
+```
+sudo yum install docker
+```
+
+3. Start the docker service
+
+```
+sudo service docker start
+```
+
+4. Add the current user to docker group
+
+```
+sudo usermod -a -G docker <user>
+```
+
+5. Run MySQL in a docker container, this will create a new database where the users and properties will be stored.
+
+```
+docker run --name mysqlpropertydb -e MYSQL_ROOT_PASSWORD=secretProperty -e MYSQL_DATABASE=properties -e MYSQL_USER=userProperty -e MYSQL_PASSWORD=secretProperty -p 3306:3306 -d mysql:latest
+```
+
+6. Verify MySQL container is running
+
+```
+docker ps 
+```
+
+### Creation example of an Amazon EC2 instance
+
+![EC2_Creation.gif](src/main/resources/vid/EC2_Creation.gif)
 
 ### Local Deployment
 
